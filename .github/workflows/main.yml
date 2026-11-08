@@ -1,0 +1,74 @@
+name: Build Voice Choir
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+          - os: macos-latest
+            name: macOS
+          - os: ubuntu-22.04
+            name: Linux
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev libxinerama-dev libxext-dev \
+            libxrandr-dev libxcursor-dev libxcomposite-dev libfreetype-dev \
+            libfontconfig1-dev libgl1-mesa-dev xvfb
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel 4
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          find build -type d -name "*.vst3" -prune -exec cp -R {} dist/ \;
+          find build -type d -name "*.component" -prune -exec cp -R {} dist/ \;
+          find build -type d -name "*.app" -prune -exec cp -R {} dist/ \; || true
+          find build -type f -name "Voice Choir" -perm -u+x -exec cp {} dist/ \; || true
+          find build -type f -name "Voice Choir.exe" -exec cp {} dist/ \; || true
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceChoir-${{ matrix.name }}
+          path: dist/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Zip
+        run: |
+          cd artifacts
+          for d in */; do (cd "$d" && zip -r "../${d%/}.zip" .); done
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip
