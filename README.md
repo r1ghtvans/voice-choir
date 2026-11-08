@@ -1,6 +1,7 @@
 # Voice Choir
 
-VST3 / AU / Standalone плагин: превращает один голос в хор (ансамбль из 1–16 «певцов»).
+VST3 / AU / Standalone плагин: превращает один голос в хор (ансамбль из 1–1000 «певцов»).
+Интерфейс в стиле пастельного 8-бит аниме с VHS-эффектами (шрифты VT323 и Press Start 2P, лицензия OFL).
 
 ## Как это работает
 Каждый певец — отдельная копия вашего голоса со своим «характером»:
@@ -10,8 +11,18 @@ VST3 / AU / Standalone плагин: превращает один голос в
 Сверху — общий ревер.
 
 ## Параметры
-Voices, Detune, Timing Spread, Vibrato Depth/Rate, Drift, Tone Variation,
-Stereo Width, Reverb Size/Mix, Dry/Wet, Output.
+Voices (1–1000), Detune, Timing, Drift, Tone, Width, Vibrato Depth/Rate,
+Reverb Room/Mix, Dry/Wet, Output.
+
+### Pitch Split
+- **UP VOICES %** — доля голосов хора, которые поют выше на **UP BY** полутонов.
+- **DN VOICES %** — доля голосов, которые поют ниже на **DOWN BY** полутонов.
+- Остальные голоса остаются на исходной высоте. Сумма «вверх» и «вниз» не больше 100%.
+- Голоса распределяются равномерно, поэтому доля точна даже при малом числе голосов.
+
+## Нагрузка на CPU
+На одном ядре: 16 голосов ≈ 1%, 100 ≈ 4%, 1000 ≈ 37% (тест в Linux-контейнере).
+Тест DSP: `cmake -B build -DVOICECHOIR_BUILD_TESTS=ON && cmake --build build --target VoiceChoirTest`
 
 ## Сборка через GitHub
 1. Загрузите репозиторий на GitHub, ветка `main`.
@@ -34,4 +45,4 @@ Stereo Width, Reverb Size/Mix, Dry/Wet, Output.
 
 ## Планы
 - Гармонический режим (MIDI-аккорд → хор поёт ноты)
-- Формантный сдвиг, собственный GUI
+- Формантный сдвиг

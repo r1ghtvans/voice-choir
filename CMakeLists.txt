@@ -29,9 +29,14 @@ juce_add_plugin(VoiceChoir
     VST3_CATEGORIES Fx Modulation
     COPY_PLUGIN_AFTER_BUILD FALSE)
 
+juce_add_binary_data(ChoirAssets SOURCES
+    Assets/VT323-Regular.ttf
+    Assets/PressStart2P-Regular.ttf)
+
 target_sources(VoiceChoir PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginProcessor.h
+    Source/PluginEditor.cpp
     Source/PluginEditor.h)
 
 target_compile_definitions(VoiceChoir PUBLIC
@@ -41,9 +46,17 @@ target_compile_definitions(VoiceChoir PUBLIC
 
 target_link_libraries(VoiceChoir
     PRIVATE
+        ChoirAssets
         juce::juce_audio_utils
-        juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+# Необязательный тест DSP:  cmake -B build -DVOICECHOIR_BUILD_TESTS=ON
+option(VOICECHOIR_BUILD_TESTS "Build DSP test" OFF)
+if(VOICECHOIR_BUILD_TESTS)
+    juce_add_console_app(VoiceChoirTest PRODUCT_NAME "VoiceChoirTest")
+    target_sources(VoiceChoirTest PRIVATE Tests/DspTest.cpp)
+    target_link_libraries(VoiceChoirTest PRIVATE VoiceChoir ChoirAssets juce::juce_audio_utils juce::juce_recommended_config_flags)
+endif()
